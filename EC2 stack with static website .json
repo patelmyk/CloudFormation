@@ -1,0 +1,64 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "EC2 instance with parameters",
+	"Parameters": {
+		"AMI": {
+			"Description": "AMI to start virtual server",
+			"Type": "String",
+			"Default" : "ami-f3e5aa9c"
+		},
+		"InstanceType": {
+			"Description": "instance type of virtual server",
+			"Type": "String",
+			"AllowedValues": ["t2.micro", "t2.small", "t2.medium"]
+		},
+		"KeyName" : {
+      			"Description" : "Name of an existing EC2 KeyPair to enable to the instances",
+      			"Type" : "AWS::EC2::KeyPair::KeyName",
+      			"ConstraintDescription" : "must be the name of an existing EC2 KeyPair."
+		},
+		"Subnet": {
+			"Description": "subnet to  launch virtual server in",
+			"Type": "AWS::EC2::Subnet::Id"
+		}
+	},
+	"Resources": {
+		"EC2Instance": {
+			"Type": "AWS::EC2::Instance",
+			"Properties": {
+				"ImageId": {"Ref": "AMI"},
+				"InstanceType": {"Ref": "InstanceType"},
+				"KeyName" : {"Ref": "KeyName"},
+				"SubnetId": {"Ref": "Subnet"},
+				"Tags": [
+					{
+						"Key": "Name",
+						"Value": "learn-cloudformation-2-parameters"
+					}
+				],
+				"UserData": {"Fn::Base64": {"Fn::Join": ["", [
+					"#!/bin/bash\n",
+					"apt-get update\n",
+					"apt-get install -y apache2\n",
+					"apt-get install -y git\n",
+					"/etc/init.d/apache2 restart\n",
+					"rm -fr /var/www/html\n",
+					"git clone https://github.com/schogini/customweb.git /var/www/html\n"
+
+				]]}}
+		
+			}
+		}
+
+	},
+	"Outputs": {
+		"InstanceId": {
+			"Value": {"Ref": "EC2Instance"},
+			"Description": "ID of virtual server"
+		},
+		"PublicIPAddress": {
+			"Value": {"Fn::GetAtt": ["EC2Instance", "PublicIp"]},
+			"Description": "public IP address of virtual server"
+		}
+	}
+}
